@@ -2,18 +2,19 @@ import React, { useState } from 'react';
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 import { PDFDownloadLink, PDFViewer } from '@react-pdf/renderer';
 
-// Стили для PDF (имитирует структуру таблицы из Excel: строки, колонки, заголовки)
+// Стили для PDF (табличный вид, максимально похож на Excel)
 const styles = StyleSheet.create({
   page: {
-    padding: 30,
+    padding: 20,
     fontSize: 8,
-    lineHeight: 1.2,
+    lineHeight: 1.3,
     fontFamily: 'Helvetica',
   },
   row: {
     flexDirection: 'row',
     borderBottom: '1px solid #ccc',
-    paddingVertical: 2,
+    paddingVertical: 3,
+    marginHorizontal: 5,
   },
   col1: {
     width: '50%',
@@ -26,6 +27,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
     marginBottom: 5,
+    marginTop: 5,
   },
   section: {
     marginBottom: 10,
@@ -33,278 +35,327 @@ const styles = StyleSheet.create({
   text: {
     marginBottom: 2,
   },
+  tableHeader: {
+    backgroundColor: '#f0f0f0',
+    padding: 3,
+    fontWeight: 'bold',
+  },
 });
 
-// Компонент PDF-документа (полностью динамический, на основе данных формы, имитирует все секции из Excel)
-const TransportNakladnayaPDF = ({ data }) => (
-  <Document>
-    <Page size="A4" style={styles.page}>
-      {/* Заголовок формы */}
-      <View>
-        <Text style={styles.header}>Приложение № 4</Text>
-        <Text style={styles.text}>к Правилам перевозок грузов автомобильным транспортом</Text>
-        <Text style={styles.text}>(в ред. Постановления Правительства РФ от 30.11.2021 № 2116)</Text>
-      </View>
-      <View style={styles.row}>
-        <Text style={styles.header}>Транспортная накладная</Text>
-      </View>
-      <View style={styles.row}>
-        <Text>Дата: {data.date}</Text>
-        <Text>№: {data.number}</Text>
-      </View>
-      <View style={styles.row}>
-        <Text>Экземпляр №: {data.copyNumber}</Text>
-      </View>
+// Обработка данных формы перед генерацией PDF
+const processFormData = (data) => ({
+  number: data.number || 'Не указано',
+  date: data.date ? new Date(data.date).toLocaleDateString('ru-RU') : 'Не указано',
+  copyNumber: data.copyNumber || '-',
+  shipperDetails: data.shipperDetails || '-',
+  customerDetails: data.customerDetails || '-',
+  consigneeDetails: data.consigneeDetails || '-',
+  deliveryAddress: data.deliveryAddress || '-',
+  cargoName: data.cargoName || '-',
+  grossWeight: data.grossWeight ? `${data.grossWeight} кг` : '-',
+  netWeight: data.netWeight ? `${data.netWeight} кг` : '-',
+  dimensions: data.dimensions || '-',
+  volume: data.volume ? `${data.volume} м³` : '-',
+  packages: data.packages || '-',
+  packaging: data.packaging || '-',
+  documents: data.documents || '-',
+  route: data.route || '-',
+  deliveryTerms: data.deliveryTerms || '-',
+  specialInstructions: data.specialInstructions || '-',
+  carrierDetails: data.carrierDetails || '-',
+  driverDetails: data.driverDetails || '-',
+  vehicleType: data.vehicleType || '-',
+  vehicleReg: data.vehicleReg || '-',
+  ownershipType: data.ownershipType || '-',
+  capacity: data.capacity ? `${data.capacity} т` : '-',
+  volumeCapacity: data.volumeCapacity ? `${data.volumeCapacity} м³` : '-',
+  loadingEntity: data.loadingEntity || data.shipperDetails || '-',
+  loadingAddress: data.loadingAddress || '-',
+  loadingTime: data.loadingTime || '-',
+  loadingSignature: data.loadingSignature || '-',
+  redirection: data.redirection || '-',
+  unloadingAddress: data.unloadingAddress || '-',
+  unloadingTime: data.unloadingTime || '-',
+  unloadingSignature: data.unloadingSignature || '-',
+  notes: data.notes || '-',
+  cost: data.cost ? `${data.cost} руб.` : '-',
+  carrierSignDate: data.carrierSignDate ? new Date(data.carrierSignDate).toLocaleDateString('ru-RU') : '-',
+  shipperSignDate: data.shipperSignDate ? new Date(data.shipperSignDate).toLocaleDateString('ru-RU') : '-',
+});
 
-      {/* Секция 1: Грузоотправитель и Заказчик */}
-      <View style={styles.section}>
-        <View style={styles.row}>
-          <Text style={[styles.header, styles.col1]}>1. Грузоотправитель</Text>
-          <Text style={[styles.header, styles.col2]}>1а. Заказчик услуг по организации перевозки груза (при наличии)</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.col1}>{data.shipperDetails}</Text>
-          <Text style={styles.col2}>{data.customerDetails || '-'}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.col1}>(реквизиты, позволяющие идентифицировать Грузоотправителя)</Text>
-          <Text style={styles.col2}>(реквизиты, позволяющие идентифицировать Заказчика услуг по организации перевозки груза)</Text>
-        </View>
-      </View>
+// Компонент PDF
+const TransportNakladnayaPDF = ({ data }) => {
+  const processedData = processFormData(data);
 
-      {/* Секция 2: Грузополучатель */}
-      <View style={styles.section}>
-        <View style={styles.row}>
-          <Text style={styles.header}>2. Грузополучатель</Text>
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        {/* Заголовок */}
+        <View>
+          <Text style={styles.header}>Приложение № 4</Text>
+          <Text style={styles.text}>к Правилам перевозок грузов автомобильным транспортом</Text>
+          <Text style={styles.text}>(в ред. Постановления Правительства РФ от 30.11.2021 № 2116)</Text>
         </View>
         <View style={styles.row}>
-          <Text>{data.consigneeDetails}</Text>
+          <Text style={styles.header}>Транспортная накладная</Text>
         </View>
         <View style={styles.row}>
-          <Text>(реквизиты, позволяющие идентифицировать Грузополучателя)</Text>
+          <Text>Дата: {processedData.date}    №: {processedData.number}</Text>
         </View>
         <View style={styles.row}>
-          <Text>{data.deliveryAddress}</Text>
+          <Text>Экземпляр №: {processedData.copyNumber}</Text>
         </View>
-        <View style={styles.row}>
-          <Text>(адрес места доставки груза)</Text>
-        </View>
-      </View>
 
-      {/* Секция 3: Груз */}
-      <View style={styles.section}>
-        <View style={styles.row}>
-          <Text style={styles.header}>3. Груз</Text>
+        {/* Секция 1: Грузоотправитель и Заказчик */}
+        <View style={styles.section}>
+          <View style={styles.row}>
+            <Text style={[styles.header, styles.col1]}>1. Грузоотправитель</Text>
+            <Text style={[styles.header, styles.col2]}>1а. Заказчик услуг по организации перевозки груза (при наличии)</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.col1}>{processedData.shipperDetails}</Text>
+            <Text style={styles.col2}>{processedData.customerDetails}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.col1}>(реквизиты, позволяющие идентифицировать Грузоотправителя)</Text>
+            <Text style={styles.col2}>(реквизиты, позволяющие идентифицировать Заказчика услуг по организации перевозки груза)</Text>
+          </View>
         </View>
-        <View style={styles.row}>
-          <Text>{data.cargoName}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>(отгрузочное наименование груза (для опасных грузов - в соответствии с ДОПОГ), его состояние и другая необходимая информация о грузе)</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>Масса брутто: {data.grossWeight} кг, Масса нетто: {data.netWeight} кг</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>Размеры (ВxШxД): {data.dimensions} м, Объём: {data.volume} м³</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>(масса груза брутто в килограммах, масса груза нетто в килограммах (при возможности ее определения), размеры (высота, ширина, длина) в метрах (при перевозке крупногабаритного груза), объем груза в кубических метрах и плотность груза в соответствии с документацией на груз (при необходимости), дополнительные характеристики груза, учитывающие отраслевые особенности (при необходимости)</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>Количество мест: {data.packages}, Маркировка/тара/упаковка: {data.packaging || '-'}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>(количество грузовых мест, маркировка, вид тары и способ упаковки)</Text>
-        </View>
-      </View>
 
-      {/* Секция 4: Сопроводительные документы */}
-      <View style={styles.section}>
-        <View style={styles.row}>
-          <Text style={styles.header}>4. Сопроводительные документы на груз (при наличии)</Text>
+        {/* Секция 2: Грузополучатель */}
+        <View style={styles.section}>
+          <View style={styles.row}>
+            <Text style={styles.header}>2. Грузополучатель</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>{processedData.consigneeDetails}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>(реквизиты, позволяющие идентифицировать Грузополучателя)</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>{processedData.deliveryAddress}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>(адрес места доставки груза)</Text>
+          </View>
         </View>
-        <View style={styles.row}>
-          <Text>{data.documents || '-'}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>(перечень прилагаемых к транспортной накладной документов, предусмотренных ДОПОГ, санитарными, таможенными (при наличии), карантинными, иными правилами в соответствии с законодательством Российской Федерации, либо регистрационные номера указанных документов, если такие документы (сведения о таких документах) содержатся в государственных информационных системах)</Text>
-        </View>
-      </View>
 
-      {/* Секция 5: Указания грузоотправителя */}
-      <View style={styles.section}>
-        <View style={styles.row}>
-          <Text style={styles.header}>5. Указания грузоотправителя по особым условиям перевозки</Text>
+        {/* Секция 3: Груз */}
+        <View style={styles.section}>
+          <View style={styles.row}>
+            <Text style={styles.header}>3. Груз</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>{processedData.cargoName}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>(отгрузочное наименование груза (для опасных грузов - в соответствии с ДОПОГ), его состояние и другая необходимая информация о грузе)</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>Масса брутто: {processedData.grossWeight}, Масса нетто: {processedData.netWeight}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>Размеры (ВxШxД): {processedData.dimensions}, Объём: {processedData.volume}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>(масса груза брутто в килограммах, масса груза нетто в килограммах (при возможности ее определения), размеры (высота, ширина, длина) в метрах (при перевозке крупногабаритного груза), объем груза в кубических метрах и плотность груза в соответствии с документацией на груз (при необходимости), дополнительные характеристики груза, учитывающие отраслевые особенности (при необходимости)</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>Количество мест: {processedData.packages}, Тара/упаковка: {processedData.packaging}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>(количество грузовых мест, маркировка, вид тары и способ упаковки)</Text>
+          </View>
         </View>
-        <View style={styles.row}>
-          <Text>Маршрут: {data.route || '-'}, Сроки доставки: {data.deliveryTerms || '-'}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>(маршрут перевозки, дата и время/сроки доставки груза (при необходимости)</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>{data.specialInstructions || '-'}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>(указания, необходимые для выполнения фитосанитарных, санитарных, карантинных, таможенных и прочих требований, установленных законодательством Российской Федерации)</Text>
-        </View>
-      </View>
 
-      {/* Секция 6: Перевозчик */}
-      <View style={styles.section}>
-        <View style={styles.row}>
-          <Text style={styles.header}>6. Перевозчик</Text>
+        {/* Секция 4: Сопроводительные документы */}
+        <View style={styles.section}>
+          <View style={styles.row}>
+            <Text style={styles.header}>4. Сопроводительные документы на груз (при наличии)</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>{processedData.documents}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>(перечень прилагаемых к транспортной накладной документов, предусмотренных ДОПОГ, санитарными, таможенными (при наличии), карантинными, иными правилами в соответствии с законодательством Российской Федерации, либо регистрационные номера указанных документов, если такие документы (сведения о таких документах) содержатся в государственных информационных системах)</Text>
+          </View>
         </View>
-        <View style={styles.row}>
-          <Text>{data.carrierDetails}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>(реквизиты, позволяющие идентифицировать Перевозчика)</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>Водитель(-и): {data.driverDetails}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>(реквизиты, позволяющие идентифицировать водителя(-ей)</Text>
-        </View>
-      </View>
 
-      {/* Секция 7: Транспортное средство */}
-      <View style={styles.section}>
-        <View style={styles.row}>
-          <Text style={styles.header}>7. Транспортное средство</Text>
+        {/* Секция 5: Указания грузоотправителя */}
+        <View style={styles.section}>
+          <View style={styles.row}>
+            <Text style={styles.header}>5. Указания грузоотправителя по особым условиям перевозки</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>Маршрут: {processedData.route}, Сроки доставки: {processedData.deliveryTerms}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>(маршрут перевозки, дата и время/сроки доставки груза (при необходимости)</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>{processedData.specialInstructions}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>(указания, необходимые для выполнения фитосанитарных, санитарных, карантинных, таможенных и прочих требований, установленных законодательством Российской Федерации)</Text>
+          </View>
         </View>
-        <View style={styles.row}>
-          <Text>Тип/марка: {data.vehicleType}, Грузоподъёмность: {data.capacity || '-'} т, Вместимость: {data.volumeCapacity || '-'} м³</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>(тип, марка, грузоподъемность (в тоннах), вместимость (в кубических метрах)</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>Регистрационный номер: {data.vehicleReg}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>(регистрационный номер транспортного средства)</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>Тип владения: {data.ownershipType} (1 - собственность; 2 - совместная собственность супругов; 3 - аренда; 4 - лизинг; 5 - безвозмездное пользование)</Text>
-        </View>
-      </View>
 
-      {/* Секция 8: Прием груза */}
-      <View style={styles.section}>
-        <View style={styles.row}>
-          <Text style={styles.header}>8. Прием груза</Text>
+        {/* Секция 6: Перевозчик */}
+        <View style={styles.section}>
+          <View style={styles.row}>
+            <Text style={styles.header}>6. Перевозчик</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>{processedData.carrierDetails}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>(реквизиты, позволяющие идентифицировать Перевозчика)</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>Водитель(-и): {processedData.driverDetails}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>(реквизиты, позволяющие идентифицировать водителя(-ей)</Text>
+          </View>
         </View>
-        <View style={styles.row}>
-          <Text>Лицо, осуществляющее погрузку: {data.loadingEntity || data.shipperDetails}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>(реквизиты лица, осуществляющего погрузку груза в транспортное средство)</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>Адрес погрузки: {data.loadingAddress}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>(адрес места погрузки)</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>Заявленная дата/время: {data.loadingTime}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>Фактическая дата/время прибытия: ____ ____________ 2025 г. ______ч:______мин.</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>Фактическая дата/время убытия: ____ ____________ 2025 г. ______ч:______мин.</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>Подпись лица, осуществившего погрузку: {data.loadingSignature}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>Подпись водителя: {data.driverDetails}</Text>
-        </View>
-      </View>
 
-      {/* Секция 9: Переадресовка (опционально) */}
-      <View style={styles.section}>
-        <View style={styles.row}>
-          <Text style={styles.header}>9. Переадресовка (при наличии)</Text>
+        {/* Секция 7: Транспортное средство */}
+        <View style={styles.section}>
+          <View style={styles.row}>
+            <Text style={styles.header}>7. Транспортное средство</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>Тип/марка: {processedData.vehicleType}, Грузоподъёмность: {processedData.capacity}, Вместимость: {processedData.volumeCapacity}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>(тип, марка, грузоподъемность (в тоннах), вместимость (в кубических метрах)</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>Регистрационный номер: {processedData.vehicleReg}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>(регистрационный номер транспортного средства)</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>Тип владения: {processedData.ownershipType} (1 - собственность; 2 - совместная собственность супругов; 3 - аренда; 4 - лизинг; 5 - безвозмездное пользование)</Text>
+          </View>
         </View>
-        <View style={styles.row}>
-          <Text>{data.redirection || '-'}</Text>
-        </View>
-      </View>
 
-      {/* Секция 10: Выдача груза */}
-      <View style={styles.section}>
-        <View style={styles.row}>
-          <Text style={styles.header}>10. Выдача груза</Text>
+        {/* Секция 8: Прием груза */}
+        <View style={styles.section}>
+          <View style={styles.row}>
+            <Text style={styles.header}>8. Прием груза</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>Лицо, осуществляющее погрузку: {processedData.loadingEntity}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>(реквизиты лица, осуществляющего погрузку груза в транспортное средство)</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>Адрес погрузки: {processedData.loadingAddress}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>(адрес места погрузки)</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>Заявленная дата/время: {processedData.loadingTime}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>Фактическая дата/время прибытия: ____ ____________ 2025 г. ______ч:______мин.</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>Фактическая дата/время убытия: ____ ____________ 2025 г. ______ч:______мин.</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>Подпись лица, осуществившего погрузку: {processedData.loadingSignature}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>Подпись водителя: {processedData.driverDetails}</Text>
+          </View>
         </View>
-        <View style={styles.row}>
-          <Text>Адрес выгрузки: {data.unloadingAddress}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>(адрес места выгрузки)</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>Заявленная дата/время: {data.unloadingTime}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>Фактическая дата/время прибытия: ____ ____________ 2025 г. ______ч:______мин.</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>Фактическая дата/время убытия: ____ ____________ 2025 г. ______ч:______мин.</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>Подпись грузополучателя: {data.unloadingSignature}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>Подпись водителя: {data.driverDetails}</Text>
-        </View>
-      </View>
 
-      {/* Секция 11: Отметки */}
-      <View style={styles.section}>
-        <View style={styles.row}>
-          <Text style={styles.header}>11. Отметки грузоотправителей, грузополучателей, перевозчиков (при необходимости)</Text>
+        {/* Секция 9: Переадресовка */}
+        <View style={styles.section}>
+          <View style={styles.row}>
+            <Text style={styles.header}>9. Переадресовка (при наличии)</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>{processedData.redirection}</Text>
+          </View>
         </View>
-        <View style={styles.row}>
-          <Text>{data.notes || '-'}</Text>
-        </View>
-      </View>
 
-      {/* Секция 12: Стоимость */}
-      <View style={styles.section}>
-        <View style={styles.row}>
-          <Text style={styles.header}>12. Стоимость перевозки груза (установленная плата) в рублях (при необходимости)</Text>
+        {/* Секция 10: Выдача груза */}
+        <View style={styles.section}>
+          <View style={styles.row}>
+            <Text style={styles.header}>10. Выдача груза</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>Адрес выгрузки: {processedData.unloadingAddress}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>(адрес места выгрузки)</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>Заявленная дата/время: {processedData.unloadingTime}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>Фактическая дата/время прибытия: ____ ____________ 2025 г. ______ч:______мин.</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>Фактическая дата/время убытия: ____ ____________ 2025 г. ______ч:______мин.</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>Подпись грузополучателя: {processedData.unloadingSignature}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>Подпись водителя: {processedData.driverDetails}</Text>
+          </View>
         </View>
-        <View style={styles.row}>
-          <Text>Всего: {data.cost} руб.</Text>
-        </View>
-        <View style={styles.row}>
-          <Text>(стоимость перевозки без налога - всего)</Text>
-        </View>
-      </View>
 
-      {/* Подписи в конце */}
-      <View style={styles.section}>
-        <View style={styles.row}>
-          <Text>Подпись перевозчика: ________________ Дата: {data.carrierSignDate || new Date().toLocaleDateString()}</Text>
+        {/* Секция 11: Отметки */}
+        <View style={styles.section}>
+          <View style={styles.row}>
+            <Text style={styles.header}>11. Отметки грузоотправителей, грузополучателей, перевозчиков (при необходимости)</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>{processedData.notes}</Text>
+          </View>
         </View>
-        <View style={styles.row}>
-          <Text>Подпись грузоотправителя: ________________ Дата: {data.shipperSignDate || new Date().toLocaleDateString()}</Text>
+
+        {/* Секция 12: Стоимость */}
+        <View style={styles.section}>
+          <View style={styles.row}>
+            <Text style={styles.header}>12. Стоимость перевозки груза (установленная плата) в рублях (при необходимости)</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>Всего: {processedData.cost}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>(стоимость перевозки без налога - всего)</Text>
+          </View>
         </View>
-      </View>
-    </Page>
-  </Document>
-);
+
+        {/* Подписи */}
+        <View style={styles.section}>
+          <View style={styles.row}>
+            <Text>Подпись перевозчика: ________________ Дата: {processedData.carrierSignDate}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text>Подпись грузоотправителя: ________________ Дата: {processedData.shipperSignDate}</Text>
+          </View>
+        </View>
+      </Page>
+    </Document>
+  );
+};
 
 function App() {
-  // Состояние формы (дефолтные значения из вашего Excel, все поля покрыты)
+  // Состояние формы (дефолтные значения из Excel)
   const [formData, setFormData] = useState({
     number: '3043',
-    date: '2025-09-19', // Формат для input type="date"
+    date: '2025-09-19',
     copyNumber: '',
     shipperDetails: 'ООО «ДДС» 690014, 680000, Хабаровский край, г.о. Город Хабаровск, г Хабаровск, ул Истомина, дом 49, помещение 2, ИНН 2700034094',
     customerDetails: '',
@@ -342,7 +393,7 @@ function App() {
     shipperSignDate: '',
   });
 
-  // Обработчик изменений (для всех input/textarea)
+  // Обработчик изменений в форме
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -350,7 +401,7 @@ function App() {
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
       <h1>Заполнение транспортной накладной</h1>
-      <p>Заполните поля ниже. Дефолтные значения взяты из вашего Excel. Нажмите "Скачать PDF" для генерации документа.</p>
+      <p>Заполните поля ниже. Нажмите "Скачать PDF" для генерации документа.</p>
       <form style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
         <label>
           Номер накладной:
@@ -502,15 +553,15 @@ function App() {
         </label>
       </form>
 
-      {/* Кнопка для скачивания PDF */}
+      {/* Кнопка скачивания PDF */}
       <div style={{ marginTop: '20px' }}>
         <PDFDownloadLink document={<TransportNakladnayaPDF data={formData} />} fileName={`nakladnaya_${formData.number}.pdf`}>
           {({ loading }) => (loading ? 'Генерация PDF...' : 'Скачать PDF')}
         </PDFDownloadLink>
       </div>
 
-      {/* Просмотр PDF в браузере (для предпросмотра) */}
-      <h2>Предпросмотр PDF</h2>
+      {/* Предпросмотр PDF */}
+      <h2 style={{ marginTop: '20px' }}>Предпросмотр PDF</h2>
       <PDFViewer width="100%" height="800px">
         <TransportNakladnayaPDF data={formData} />
       </PDFViewer>
