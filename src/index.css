@@ -33,6 +33,12 @@ body {
 h1 {
   font-size: 2.2em;
   line-height: 1.1;
+  color: #333;
+}
+
+h2 {
+  font-size: 1.5em;
+  color: #333;
 }
 
 button {
@@ -44,10 +50,11 @@ button {
   font-family: inherit;
   background-color: #1a1a1a;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: border-color 0.25s, background-color 0.25s;
 }
 button:hover {
   border-color: #646cff;
+  background-color: #2a2a2a;
 }
 button:focus,
 button:focus-visible {
@@ -65,13 +72,30 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+  button:hover {
+    background-color: #e0e0e0;
+  }
+  h1, h2 {
+    color: #213547;
+  }
 }
 
-/* Дополнительные стили для формы */
+/* Стили для формы */
+form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 form label {
-  display: block;
-  margin-bottom: 5px;
+  display: flex;
+  flex-direction: column;
   font-weight: bold;
+  color: #333;
 }
 
 form input, form textarea {
@@ -80,4 +104,15 @@ form input, form textarea {
   border: 1px solid #ccc;
   border-radius: 4px;
   box-sizing: border-box;
+  font-size: 0.9em;
+  margin-top: 5px;
+}
+
+form input:focus, form textarea:focus {
+  border-color: #646cff;
+  outline: none;
+}
+
+form textarea {
+  resize: vertical;
 }
